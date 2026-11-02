@@ -2,11 +2,11 @@ export type ItemKind = 'home' | 'bed' | 'path' | 'flowers' | 'lantern' | 'bench'
 export type Rotation = 0 | 1 | 2 | 3;
 export interface Cell { x: number; z: number }
 export interface GardenObject extends Cell { id: string; kind: ItemKind; rotation: Rotation }
-export interface Draft { kind: ItemKind; rotation: Rotation; position: Cell | null; movingId?: string }
-export interface BuildingState { objects: GardenObject[]; draft: Draft | null; nextId: number; message: string }
+export interface Draft { kind: ItemKind; rotation: Rotation; position: Cell | null; movingId?: string; pending?: boolean }
+export interface BuildingState { objects: GardenObject[]; draft: Draft | null; nextId: number; message: string; lastPlacementId: string | null }
 export const BOARD = { width: 10, depth: 8 };
 export const items: Record<ItemKind, { name: string; icon: string; width: number; depth: number; supply: number; layer: 'ground' | 'solid' }> = {
-  home: { name: 'Home', icon: '⌂', width: 2, depth: 2, supply: 3, layer: 'solid' },
+  home: { name: 'Home', icon: '⌂', width: 2, depth: 2, supply: 1, layer: 'solid' },
   bed: { name: 'Garden bed', icon: '🌱', width: 2, depth: 1, supply: 6, layer: 'solid' },
   path: { name: 'Path', icon: '◈', width: 1, depth: 1, supply: 36, layer: 'ground' },
   flowers: { name: 'Flowers', icon: '✿', width: 1, depth: 1, supply: 12, layer: 'solid' },
@@ -61,18 +61,20 @@ export function placementError(objects: GardenObject[], draft: Draft): string | 
 }
 export function createBuildingState(): BuildingState {
   return {
-    objects: [
-      { id: 'piece-1', kind: 'home', x: 1, z: 1, rotation: 0 },
-      { id: 'piece-2', kind: 'bed', x: 7, z: 1, rotation: 0 },
-      { id: 'piece-3', kind: 'path', x: 1, z: 3, rotation: 0 },
-      { id: 'piece-4', kind: 'flowers', x: 0, z: 3, rotation: 0 },
-    ], draft: null, nextId: 5, message: 'Welcome! Choose a piece, or tap something in your garden to move it.',
+    objects: [], draft: { kind: 'home', rotation: 0, position: null }, nextId: 1,
+    lastPlacementId: null, message: 'Hi, I’m Pip! Tap a space to build my home.',
   };
+}
+export function canBuild(state: BuildingState, kind: ItemKind): boolean {
+  return (kind === 'home' || state.objects.some((o) => o.kind === 'home'))
+    && state.objects.filter((o) => o.kind === kind).length < items[kind].supply;
 }
 export type BuildingAction =
   | { type: 'choose'; kind: ItemKind }
   | { type: 'select'; id: string }
   | { type: 'position'; position: Cell }
+  | { type: 'tap'; position: Cell }
+  | { type: 'undo' }
   | { type: 'nudge'; dx: number; dz: number }
   | { type: 'rotate' }
   | { type: 'confirm' }
@@ -81,19 +83,25 @@ export type BuildingAction =
 export function buildingReducer(state: BuildingState, action: BuildingAction): BuildingState {
   switch (action.type) {
     case 'choose':
+      if (action.kind !== 'home' && !state.objects.some((o) => o.kind === 'home')) return { ...state, message: 'Let’s give Pip a home first.' };
       if (state.objects.filter((o) => o.kind === action.kind).length >= items[action.kind].supply) return { ...state, message: 'All of those pieces are in use. Return one to the tray first.' };
       return { ...state, draft: { kind: action.kind, rotation: 0, position: null }, message: `Choose a spot for your ${items[action.kind].name.toLowerCase()}.` };
     case 'select': {
       const object = state.objects.find((o) => o.id === action.id);
-      return object ? { ...state, draft: { kind: object.kind, rotation: object.rotation, position: { x: object.x, z: object.z }, movingId: object.id }, message: 'Choose a new spot, turn it, or return it to the tray.' } : state;
+      return object ? { ...state, draft: { kind: object.kind, rotation: object.rotation, position: { x: object.x, z: object.z }, movingId: object.id, pending: false }, message: 'Choose a new spot, turn it, or return it to the tray.' } : state;
     }
-    case 'position': return state.draft ? { ...state, draft: { ...state.draft, position: action.position } } : state;
+    case 'tap': {
+      if (!state.draft) return state;
+      const positioned = buildingReducer(state, { type: 'position', position: action.position });
+      return state.draft.movingId ? positioned : buildingReducer(positioned, { type: 'confirm' });
+    }
+    case 'position': return state.draft ? { ...state, draft: { ...state.draft, position: action.position, ...(state.draft.movingId ? { pending: true } : {}) } } : state;
     case 'nudge': {
       if (!state.draft) return state;
       const start = state.draft.position ?? { x: 0, z: 0 };
-      return { ...state, draft: { ...state.draft, position: { x: Math.max(0, Math.min(BOARD.width - 1, start.x + action.dx)), z: Math.max(0, Math.min(BOARD.depth - 1, start.z + action.dz)) } } };
+      return { ...state, draft: { ...state.draft, position: { x: Math.max(0, Math.min(BOARD.width - 1, start.x + action.dx)), z: Math.max(0, Math.min(BOARD.depth - 1, start.z + action.dz)) }, ...(state.draft.movingId ? { pending: true } : {}) } };
     }
-    case 'rotate': return state.draft ? { ...state, draft: { ...state.draft, rotation: ((state.draft.rotation + 1) % 4) as Rotation } } : state;
+    case 'rotate': return state.draft ? { ...state, draft: { ...state.draft, rotation: ((state.draft.rotation + 1) % 4) as Rotation, ...(state.draft.movingId ? { pending: true } : {}) } } : state;
     case 'cancel': return { ...state, draft: null, message: 'No changes made. Keep exploring your garden.' };
     case 'confirm': {
       if (!state.draft) return state;
@@ -101,11 +109,12 @@ export function buildingReducer(state: BuildingState, action: BuildingAction): B
       if (error) return { ...state, message: error };
       const draft = state.draft;
       const object: GardenObject = { ...draft.position!, kind: draft.kind, rotation: draft.rotation, id: draft.movingId ?? `piece-${state.nextId}` };
-      return { ...state, objects: [...state.objects.filter((o) => o.id !== draft.movingId), object], draft: null, nextId: state.nextId + (draft.movingId ? 0 : 1), message: `${items[draft.kind].name} ${draft.movingId ? 'moved' : 'placed'}! What would you like to make next?` };
+      return { ...state, objects: [...state.objects.filter((o) => o.id !== draft.movingId), object], draft: null, nextId: state.nextId + (draft.movingId ? 0 : 1), lastPlacementId: draft.movingId ? null : object.id, message: `${items[draft.kind].name} ${draft.movingId ? 'moved' : 'placed'}! What would you like to make next?` };
     }
+    case 'undo': return state.lastPlacementId ? { ...state, objects: state.objects.filter((o) => o.id !== state.lastPlacementId), lastPlacementId: null, draft: null, message: 'Undone! That piece is back in your tray.' } : state;
     case 'remove': {
       const id = state.draft?.movingId;
-      return id ? { ...state, objects: state.objects.filter((o) => o.id !== id), draft: null, message: 'Returned to the tray. You can use that piece again.' } : state;
+      return id ? { ...state, objects: state.objects.filter((o) => o.id !== id), draft: null, lastPlacementId: null, message: 'Returned to the tray. You can use that piece again.' } : state;
     }
   }
 }

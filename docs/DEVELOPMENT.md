@@ -56,15 +56,15 @@ No account service or analytics is configured. Use temporary geometry until inte
 
 ## Next milestone
 
-Milestone 1 implements data-driven footprints and grid placement, confirm/cancel, movement, rotation, return-to-tray, obstruction feedback, and reachable doors and shared areas. Paths occupy their own layer and may run beneath structures.
+Milestone 1 implements data-driven footprints and immediate tap-to-build placement, Undo for the latest new piece, movement with an on-world confirmation, rotation, return-to-tray, obstruction feedback, and reachable doors and shared areas. The clearing starts empty with Pip’s home selected. Only one home is available; placing it opens creative building. The game fills the viewport and includes an optional Fullscreen button. Paths occupy their own layer and may run beneath structures.
 
 Next: planting, watering, growing, and harvesting. Add crop state before allowing planted beds to return to the tray; moving a planted bed must preserve its contents. Continue real-device testing with children.
 
 ## Building review checklist
 
-1. Choose a tray item, tap a space, turn it, and confirm.
-2. Tap a placed piece or select it in Garden pieces. Move it and cancel; it must remain in its original position.
+1. Start on an empty clearing. Turn Pip’s home if desired, then tap a valid space; it must build immediately without confirmation. Other tray pieces become available.
+2. Tap a placed piece or select it in the Garden pieces dialog. Tap a new position; an on-world move pop-up must appear. Cancel must keep the original position.
 3. Move and confirm, then return it to the tray. Availability must increase.
-4. Try overlaps, garden edges, shared spaces, and blocking a front door; each must explain the problem and disable confirmation.
-5. Try Help, keyboard arrows, and Placement arrows on computer and tablet.
+4. Try overlaps, garden edges, shared spaces, and blocking a front door; invalid new taps must not build. Invalid moves must explain the problem and disable Move here.
+5. Try Undo placement, Help, keyboard arrows, and the optional Fullscreen control on computer and tablet. Check that the main game does not scroll and controls remain in the viewport.
 6. Reload to confirm this milestone intentionally starts fresh; browser saving is not implemented yet.

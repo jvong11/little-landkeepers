@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { buildingReducer as reduce, cells, createBuildingState, footprint, items, placementError, type BuildingState, type Draft, type GardenObject } from './building';
+import { buildingReducer as reduce, cells, createBuildingState as emptyGarden, footprint, items, placementError, type BuildingState, type Draft, type GardenObject } from './building';
+function createBuildingState(): BuildingState {
+  return {
+    objects: [
+      { id: 'piece-1', kind: 'home', x: 1, z: 1, rotation: 0 },
+      { id: 'piece-2', kind: 'bed', x: 7, z: 1, rotation: 0 },
+      { id: 'piece-3', kind: 'path', x: 1, z: 3, rotation: 0 },
+      { id: 'piece-4', kind: 'flowers', x: 0, z: 3, rotation: 0 },
+    ], draft: null, nextId: 5, lastPlacementId: null, message: '',
+  };
+}
 const draft = (kind: Draft['kind'], x: number, z: number, rotation: Draft['rotation'] = 0): Draft => ({ kind, position: { x, z }, rotation });
 describe('garden placement', () => {
   it('rotates rectangular footprints', () => {
@@ -80,5 +90,58 @@ describe('building transactions', () => {
     state = reduce(state, { type: 'choose', kind: 'path' });
     expect(state.draft).toEqual({ kind: 'path', rotation: 0, position: null });
     expect(state.objects).toHaveLength(4);
+  });
+});
+
+describe('Pip’s opening and immediate building', () => {
+  it('starts with an empty clearing and Pip’s home ready to place', () => {
+    const state = emptyGarden();
+    expect(state.objects).toEqual([]);
+    expect(state.draft).toEqual({ kind: 'home', rotation: 0, position: null });
+    expect(items.home.supply).toBe(1);
+  });
+  it('places a new piece with one valid tap and ignores a repeated tap', () => {
+    const state = reduce(emptyGarden(), { type: 'tap', position: { x: 1, z: 1 } });
+    expect(state.objects).toHaveLength(1);
+    expect(state.draft).toBeNull();
+    expect(reduce(state, { type: 'tap', position: { x: 4, z: 1 } })).toBe(state);
+  });
+  it('keeps invalid taps editable without building anything', () => {
+    const state = reduce(emptyGarden(), { type: 'tap', position: { x: 7, z: 5 } });
+    expect(state.objects).toEqual([]);
+    expect(state.draft?.position).toEqual({ x: 7, z: 5 });
+    expect(state.message).toMatch(/shared space/);
+  });
+  it('requires explicit confirmation for a move and cancellation keeps the original', () => {
+    let state = reduce(emptyGarden(), { type: 'tap', position: { x: 1, z: 1 } });
+    const original = state.objects;
+    state = reduce(state, { type: 'select', id: 'piece-1' });
+    expect(state.draft?.pending).toBe(false);
+    state = reduce(state, { type: 'tap', position: { x: 3, z: 2 } });
+    expect(state.draft?.pending).toBe(true);
+    expect(state.objects).toBe(original);
+    expect(reduce(state, { type: 'cancel' }).objects).toBe(original);
+    expect(reduce(state, { type: 'confirm' }).objects[0]).toMatchObject({ id: 'piece-1', x: 3, z: 2 });
+  });
+  it('opens move confirmation when turning an existing piece', () => {
+    let state = reduce(emptyGarden(), { type: 'tap', position: { x: 1, z: 1 } });
+    state = reduce(state, { type: 'select', id: 'piece-1' });
+    state = reduce(state, { type: 'rotate' });
+    expect(state.draft?.pending).toBe(true);
+    expect(state.objects[0].rotation).toBe(0);
+  });
+  it('unlocks creative building after the home and prevents a second home', () => {
+    expect(reduce(emptyGarden(), { type: 'choose', kind: 'bench' }).draft?.kind).toBe('home');
+    const state = reduce(emptyGarden(), { type: 'tap', position: { x: 1, z: 1 } });
+    expect(reduce(state, { type: 'choose', kind: 'bench' }).draft?.kind).toBe('bench');
+    expect(reduce(state, { type: 'choose', kind: 'home' }).draft).toBeNull();
+  });
+  it('undoes immediate placement and restores the piece without recycling its ID', () => {
+    let state = reduce(emptyGarden(), { type: 'tap', position: { x: 1, z: 1 } });
+    state = reduce(state, { type: 'undo' });
+    expect(state.objects).toHaveLength(0);
+    state = reduce(state, { type: 'choose', kind: 'home' });
+    state = reduce(state, { type: 'tap', position: { x: 1, z: 1 } });
+    expect(state.objects[0].id).toBe('piece-2');
   });
 });

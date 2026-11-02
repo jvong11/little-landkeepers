@@ -4,22 +4,28 @@ import * as THREE from 'three';
 import { BOARD, cells, footprint, growing, items, key, picnic, placementError, type Cell, type GardenObject } from '../game/building';
 import { useBuildingStore } from '../game/buildingStore';
 import { CAMERA_POSITION, gardenZoom } from './camera';
-import { Bed, PieceModel, Rabbit, Tree } from './GardenPieces';
+import { PieceModel, Rabbit, Tree } from './GardenPieces';
 
 const noRaycast = () => {};
 function worldCenter(object: Pick<GardenObject, 'kind' | 'rotation' | 'x' | 'z'>): [number, number, number] {
   const { width, depth } = footprint(object.kind, object.rotation);
   return [object.x + width / 2 - BOARD.width / 2, 0, object.z + depth / 2 - BOARD.depth / 2];
 }
-function ResponsiveCamera() {
+function ResponsiveCamera({ onMoveAnchor }: { onMoveAnchor: (point: { x: number; y: number } | null) => void }) {
+  const draft = useBuildingStore((s) => s.garden.draft);
   const { camera, size, invalidate } = useThree();
   useEffect(() => {
     const ortho = camera as THREE.OrthographicCamera;
     ortho.zoom = gardenZoom(size.width, size.height);
     ortho.lookAt(0, 0, 0);
     ortho.updateProjectionMatrix();
+    if (draft?.movingId && draft.pending && draft.position) {
+      const center = worldCenter({ kind: draft.kind, rotation: draft.rotation, ...draft.position });
+      const projected = new THREE.Vector3(center[0], 1, center[2]).project(ortho);
+      onMoveAnchor({ x: (projected.x + 1) * size.width / 2, y: (1 - projected.y) * size.height / 2 });
+    } else onMoveAnchor(null);
     invalidate();
-  }, [camera, size.width, size.height, invalidate]);
+  }, [camera, size.width, size.height, invalidate, draft, onMoveAnchor]);
   return null;
 }
 function GroundMark({ c, color, opacity = .3 }: { c: Cell; color: string; opacity?: number }) {
@@ -27,7 +33,7 @@ function GroundMark({ c, color, opacity = .3 }: { c: Cell; color: string; opacit
     <planeGeometry args={[.94, .94]} /><meshBasicMaterial color={color} transparent opacity={opacity} depthWrite={false} />
   </mesh>;
 }
-function Garden({ onReady }: { onReady: () => void }) {
+function Garden({ onReady, onMoveAnchor }: { onReady: () => void; onMoveAnchor: (point: { x: number; y: number } | null) => void }) {
   const garden = useBuildingStore((s) => s.garden);
   const dispatch = useBuildingStore((s) => s.dispatch);
   const [hover, setHover] = useState<Cell | null>(null);
@@ -48,10 +54,10 @@ function Garden({ onReady }: { onReady: () => void }) {
   const cellAt = (event: ThreeEvent<PointerEvent | MouseEvent>): Cell => ({ x: Math.floor(event.point.x + BOARD.width / 2), z: Math.floor(event.point.z + BOARD.depth / 2) });
   const chooseCell = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
-    if (draft) dispatch({ type: 'position', position: cellAt(event) });
+    if (draft) dispatch({ type: 'tap', position: cellAt(event) });
   };
   return <>
-    <ResponsiveCamera />
+    <ResponsiveCamera onMoveAnchor={onMoveAnchor} />
     <ambientLight intensity={1.5} /><directionalLight position={[6, 10, 4]} intensity={2.2} />
     <mesh position={[0, -.23, 0]}><boxGeometry args={[10.4, .46, 8.4]} /><meshStandardMaterial color="#a9be79" /></mesh>
     <mesh position={[0, -.55, 0]}><boxGeometry args={[10.1, .2, 8.1]} /><meshStandardMaterial color="#b99768" /></mesh>
@@ -59,16 +65,16 @@ function Garden({ onReady }: { onReady: () => void }) {
     {growing.map((c) => <GroundMark key={`grow-${key(c)}`} c={c} color="#cfa46a" />)}
     {picnic.map((c) => <GroundMark key={`picnic-${key(c)}`} c={c} color="#e2bd8d" opacity={.55} />)}
     <GroundMark c={{ x: 5, z: 7 }} color="#e2d2a5" opacity={.8} />
-    <group position={[-3, 0, 1.5]}><Bed planted /></group>
+
     <group position={[3, .025, 2]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} raycast={noRaycast}><planeGeometry args={[1.8, 1.8]} /><meshStandardMaterial color="#f0ce9e" /></mesh>
-      {[-.48, .48].map((x) => <mesh key={x} position={[x, .035, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={noRaycast}><circleGeometry args={[.24, 16]} /><meshStandardMaterial color="#fff5dc" /></mesh>)}
+
     </group>
-    <group position={[3, 0, 2.7]}><Rabbit /></group>
+    <group position={[.5, 0, 3.5]}><Rabbit /></group>
     {[[-5.6, -3.6, .95], [-2.6, -4.7, 1.1], [1.8, -4.8, .9], [5.6, -2.5, 1], [-5.7, 1.5, .7]].map(([x, z, size]) => <Tree key={x} x={x} z={z} size={size} />)}
     {garden.objects.map((object) => <group key={object.id} position={worldCenter(object)} rotation={[0, object.rotation * Math.PI / 2, 0]} onClick={(event) => {
       event.stopPropagation();
-      if (draft) dispatch({ type: 'position', position: { x: object.x, z: object.z } });
+      if (draft) dispatch({ type: 'tap', position: { x: object.x, z: object.z } });
       else dispatch({ type: 'select', id: object.id });
     }}>
       <PieceModel kind={object.kind} />
@@ -105,8 +111,8 @@ class SceneBoundary extends Component<{ children: ReactNode; onFailure: () => vo
   static getDerivedStateFromError() { return { failed: true }; }
   render() { return this.state.failed ? <p className="scene-message" role="alert">The garden could not load. Try refreshing or opening it in another browser.</p> : this.props.children; }
 }
-export function GardenScene({ onReady, onFailure }: { onReady: () => void; onFailure: () => void }) {
+export function GardenScene({ onReady, onFailure, onMoveAnchor }: { onReady: () => void; onFailure: () => void; onMoveAnchor: (point: { x: number; y: number } | null) => void }) {
   return <SceneBoundary onFailure={onFailure}><Canvas orthographic camera={{ position: CAMERA_POSITION, zoom: 40, near: .1, far: 100 }} dpr={[1, 1.5]} frameloop="demand" gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }} fallback={<p className="scene-message" role="alert">This browser needs WebGL to show the garden. Try another browser or device.</p>}>
-    <Suspense fallback={null}><Garden onReady={onReady} /></Suspense>
+    <Suspense fallback={null}><Garden onReady={onReady} onMoveAnchor={onMoveAnchor} /></Suspense>
   </Canvas></SceneBoundary>;
 }
