@@ -112,23 +112,58 @@ describe('Pip’s opening and immediate building', () => {
     expect(state.draft?.position).toEqual({ x: 7, z: 5 });
     expect(state.message).toMatch(/shared space/);
   });
-  it('requires explicit confirmation for a move and cancellation keeps the original', () => {
+  it('moves immediately on a valid destination tap and supports undo', () => {
+    let state = reduce(emptyGarden(), { type: 'tap', position: { x: 1, z: 1 } });
+    const original = state.objects[0];
+    state = reduce(state, { type: 'select', id: original.id });
+    state = reduce(state, { type: 'tap', position: { x: 3, z: 2 } });
+    expect(state.draft).toBeNull();
+    expect(state.objects[0]).toMatchObject({ id: original.id, x: 3, z: 2 });
+    expect(state.nextId).toBe(2);
+    state = reduce(state, { type: 'undo' });
+    expect(state.objects).toEqual([original]);
+    expect(state.lastMove).toBeNull();
+    expect(reduce(state, { type: 'undo' })).toBe(state);
+  });
+  it('turns only the preview, and undo restores position and orientation', () => {
     let state = reduce(emptyGarden(), { type: 'tap', position: { x: 1, z: 1 } });
     const original = state.objects;
     state = reduce(state, { type: 'select', id: 'piece-1' });
-    expect(state.draft?.pending).toBe(false);
-    state = reduce(state, { type: 'tap', position: { x: 3, z: 2 } });
-    expect(state.draft?.pending).toBe(true);
+    state = reduce(state, { type: 'rotate' });
     expect(state.objects).toBe(original);
-    expect(reduce(state, { type: 'cancel' }).objects).toBe(original);
-    expect(reduce(state, { type: 'confirm' }).objects[0]).toMatchObject({ id: 'piece-1', x: 3, z: 2 });
+    state = reduce(state, { type: 'tap', position: { x: 3, z: 2 } });
+    expect(state.objects[0].rotation).toBe(1);
+    expect(reduce(state, { type: 'undo' }).objects).toEqual(original);
   });
-  it('opens move confirmation when turning an existing piece', () => {
+  it('keeps invalid move taps editable and cancel preserves the original', () => {
+    let state = reduce(emptyGarden(), { type: 'tap', position: { x: 1, z: 1 } });
+    const original = state.objects;
+    state = reduce(state, { type: 'select', id: 'piece-1' });
+    state = reduce(state, { type: 'tap', position: { x: 7, z: 5 } });
+    expect(state.objects).toBe(original);
+    expect(state.draft?.movingId).toBe('piece-1');
+    expect(state.message).toMatch(/shared space/);
+    expect(reduce(state, { type: 'cancel' }).objects).toBe(original);
+    state = reduce(state, { type: 'tap', position: { x: 3, z: 2 } });
+    expect(state.draft).toBeNull();
+    expect(state.objects[0]).toMatchObject({ x: 3, z: 2 });
+  });
+  it('a later build or removal replaces move undo, and a no-op move preserves undo', () => {
     let state = reduce(emptyGarden(), { type: 'tap', position: { x: 1, z: 1 } });
     state = reduce(state, { type: 'select', id: 'piece-1' });
-    state = reduce(state, { type: 'rotate' });
-    expect(state.draft?.pending).toBe(true);
-    expect(state.objects[0].rotation).toBe(0);
+    state = reduce(state, { type: 'tap', position: { x: 1, z: 1 } });
+    expect(state.lastPlacementId).toBe('piece-1');
+    state = reduce(state, { type: 'select', id: 'piece-1' });
+    state = reduce(state, { type: 'tap', position: { x: 3, z: 2 } });
+    const moved = state;
+    state = reduce(state, { type: 'choose', kind: 'flowers' });
+    state = reduce(state, { type: 'tap', position: { x: 1, z: 1 } });
+    expect(state.lastMove).toBeNull();
+    state = reduce(state, { type: 'undo' });
+    expect(state.objects).toEqual(moved.objects);
+    state = reduce(moved, { type: 'select', id: 'piece-1' });
+    state = reduce(state, { type: 'remove' });
+    expect(reduce(state, { type: 'undo' }).objects).toEqual([]);
   });
   it('unlocks creative building after the home and prevents a second home', () => {
     expect(reduce(emptyGarden(), { type: 'choose', kind: 'bench' }).draft?.kind).toBe('home');
@@ -156,13 +191,13 @@ describe('piece actions and pointer previews', () => {
     expect(reduce(selected, { type: 'dismiss' }).selectedId).toBeNull();
     expect(reduce(selected, { type: 'select', id: 'piece-1' }).selectedId).toBeNull();
   });
-  it('follows pointer previews without committing and freezes a destination pending confirmation', () => {
+  it('follows pointer previews without committing until the destination tap', () => {
     let state = reduce(emptyGarden(), { type: 'tap', position: { x: 1, z: 1 } });
     const original = state.objects;
     state = reduce(state, { type: 'select', id: 'piece-1' });
     state = reduce(state, { type: 'preview', position: { x: 3, z: 2 } });
     state = reduce(state, { type: 'preview', position: { x: 4, z: 2 } });
-    expect(state.draft).toMatchObject({ position: { x: 4, z: 2 }, pending: false });
+    expect(state.draft).toMatchObject({ position: { x: 4, z: 2 } });
     expect(state.objects).toBe(original);
     state = reduce(state, { type: 'tap', position: { x: 4, z: 2 } });
     expect(reduce(state, { type: 'preview', position: { x: 7, z: 5 } })).toBe(state);

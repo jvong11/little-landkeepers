@@ -46,7 +46,7 @@ test('starts empty, fills the browser, and builds Pip’s home immediately', asy
   expect(await page.evaluate(() => ({ horizontal: document.documentElement.scrollWidth <= innerWidth, vertical: document.documentElement.scrollHeight <= innerHeight }))).toEqual({ horizontal: true, vertical: true });
   expect(errors).toEqual([]);
 });
-test('turns new pieces before tapping and confirms moves in an on-world pop-up', async ({ page }, info) => {
+test('turns pieces, cancels previews, rejects invalid moves, and moves immediately with undo', async ({ page }, info) => {
   const touch = info.project.name === 'tablet-chromium';
   await openGarden(page);
   await chooseCell(page, 1, 1, touch);
@@ -56,11 +56,8 @@ test('turns new pieces before tapping and confirms moves in an on-world pop-up',
   await expect(page.getByRole('button', { name: 'Build Bench', exact: true })).toContainText('3 in tray');
   await selectPiece(page, /^Move Bench /);
   await expect(page.getByRole('dialog', { name: 'Confirm move' })).toHaveCount(0);
-  await chooseCell(page, 6, 3, touch);
-  const confirmation = page.getByRole('dialog', { name: 'Confirm move' });
-  await expect(confirmation).toBeVisible();
-  await confirmation.getByRole('button', { name: 'Cancel', exact: false }).click();
-  await expect(confirmation).toHaveCount(0);
+  if (!touch) await chooseCell(page, 6, 3, false, true);
+  await page.getByRole('button', { name: 'Cancel', exact: false }).click();
   await selectPiece(page, /^Move Bench /);
   // The original bench still occupies 3,3 after cancellation; another solid cannot use its cell.
   await page.getByRole('button', { name: 'Cancel', exact: false }).click();
@@ -70,7 +67,15 @@ test('turns new pieces before tapping and confirms moves in an on-world pop-up',
   await page.getByRole('button', { name: 'Cancel', exact: false }).click();
   await selectPiece(page, /^Move Bench /);
   await chooseCell(page, 6, 3, touch);
-  await confirmation.getByRole('button', { name: 'Move here', exact: false }).click();
+  await expect(page.getByRole('dialog', { name: 'Confirm move' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Undo move', exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Undo move', exact: false }).click();
+  await selectPiece(page, /^Move Bench /);
+  await chooseCell(page, 7, 5, touch);
+  await expect(page.getByTestId('placement-feedback')).toContainText('shared space');
+  await expect(page.getByLabel('Placement tools')).toBeVisible();
+  await chooseCell(page, 6, 3, touch);
+  await expect(page.getByRole('button', { name: 'Undo move', exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Build Flowers', exact: true }).click();
   await chooseCell(page, 3, 3, touch);
   await expect(page.getByRole('button', { name: 'Build Flowers', exact: true })).toContainText('11 in tray');
@@ -98,6 +103,15 @@ test('offers replayable help and keyboard placement', async ({ page }) => {
   await garden.focus(); await garden.press('ArrowRight'); await garden.press('Enter');
   await expect(page.getByRole('button', { name: 'Build Home', exact: true })).toContainText('0 in tray');
   await expect(page.getByRole('button', { name: 'Enter fullscreen', exact: true })).toBeVisible();
+  await selectPiece(page, /^Move Home /);
+  await garden.press('ArrowRight'); await garden.press('Escape');
+  await expect(page.getByLabel('Placement tools')).toHaveCount(0);
+  await selectPiece(page, /^Move Home /);
+  await garden.press('ArrowRight'); await garden.press('Enter');
+  await expect(page.getByRole('button', { name: 'Undo move', exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Undo move', exact: false }).click();
+  await expect(page.getByTestId('placement-feedback')).toContainText('Move undone');
+
 });
 
 test('placed pieces open an actions menu before moving, with dismissal and hover preview', async ({ page }, info) => {
@@ -126,9 +140,9 @@ test('placed pieces open an actions menu before moving, with dismissal and hover
     await expect(page.getByRole('dialog', { name: 'Confirm move' })).toHaveCount(0);
   }
   await chooseCell(page, 4, 2, touch);
-  const confirmation = page.getByRole('dialog', { name: 'Confirm move' });
-  await expect(confirmation).toBeVisible();
-  await confirmation.getByRole('button', { name: 'Cancel', exact: false }).click();
+  await expect(page.getByRole('dialog', { name: 'Confirm move' })).toHaveCount(0);
+  await expect(page.getByLabel('Placement tools')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Undo move', exact: false }).click();
   await chooseCell(page, 1, 1, touch);
   await expect(actions).toBeVisible();
   await page.keyboard.press('Escape');

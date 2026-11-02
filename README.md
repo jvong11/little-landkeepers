@@ -4,7 +4,7 @@ A browser garden game where children learn through caring, building, and experim
 
 ## Current milestone
 
-Garden building: choose homes, beds, paths, flowers, lanterns, and benches; turn and tap to build immediately, or move existing pieces with an on-world confirmation. Shared growing/picnic spaces and reachable home doors are protected.
+Garden building: choose homes, beds, paths, flowers, lanterns, and benches; turn and tap to build immediately, or move existing pieces immediately after choosing Move, with Undo move available. Shared growing/picnic spaces and reachable home doors are protected.
 
 Use the Help button for controls. Tap-to-place, mouse, keyboard arrows, and placement buttons are supported. The game fills the browser, starts with an empty clearing and one home for Pip, and offers optional browser fullscreen. New placements have Undo. This build uses temporary models and resets on reload. Growing, picnics, and browser saves are later milestones.
 
@@ -46,4 +46,4 @@ All rights reserved pending an explicit project license. Public source visibilit
 - Integration testing from dev: https://dev.little-landkeepers.pages.dev/
 - Feature branches receive Cloudflare previews; review these before merging.
 
-Placed pieces first open an on-garden actions menu with a four-direction Move icon and Cancel. Clicking away dismisses the menu. Move starts a pointer-following preview (tap a destination on touch), then the destination uses Move here / Cancel confirmation. The original remains in place until confirmed.
+Placed pieces first open an on-garden actions menu with a four-direction Move icon and Cancel. Clicking away dismisses the menu. Move starts a pointer-following preview (tap a destination on touch). A valid destination tap moves immediately. Cancel or Escape preserves the original during preview; Undo move restores the previous position and rotation after placement. Invalid taps keep the preview active.

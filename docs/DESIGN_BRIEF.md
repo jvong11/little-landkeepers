@@ -30,7 +30,7 @@ The game fills the browser viewport with floating controls and a building tray. 
 | Harvest | Select a ripe carrot. Transfer exactly one carrot to the basket and clear that cell for replanting. |
 | Prepare food | Select a carrot from the basket and a plate. Transfer one carrot. Food can also move between plates or back into the basket. |
 | Ring the picnic bell | Guests inspect their meals. If every plate meets its request, the picnic begins; otherwise the arrangement remains editable. |
-| Rearrange | Select an object to move, rotate, or return to the building tray. Tapping a destination for an existing item opens a confirmation over the garden. Confirm commits the move; cancellation preserves the original placement. |
+| Rearrange | Select an object to move, rotate, or return to the building tray. Choose Move from the item’s action menu, preview a destination, then tap to move immediately. Cancel or Escape preserves the original placement during the preview; Undo move restores the previous position and rotation afterward. |
 
 Plates accept extra food rather than rejecting incorrect placements. Keep inventory and plate contents visible and countable. Do not highlight the correct mathematical destination after each action. Consume requested portions only when the picnic succeeds; return extras to the basket. Food is never lost on an unsuccessful attempt.
 
@@ -109,7 +109,7 @@ Codespaces uses one fixed Vite port bound to 0.0.0.0, declared in the devcontain
 | Milestone | Deliverable | Acceptance |
 | --- | --- | --- |
 | 0 Setup | Repository, pinned dependencies, Codespaces configuration, CI, Cloudflare previews, and project documentation. | A minimal build loads from a deployed preview; dev and production routing are verified. |
-| 1 Garden building | Orthographic clearing, grid, basic home, bed, paths, decorations, immediate new placement, Undo, movement with on-world confirmation, rotation, cancellation. | Mouse and touch placement work; overlap rules hold; cancellation preserves objects; scenes stay readable. |
+| 1 Garden building | Orthographic clearing, grid, basic home, bed, paths, decorations, immediate new placement, Undo, immediate movement after choosing Move, Undo move, rotation, cancellation. | Mouse and touch placement work; overlap rules hold; cancellation preserves objects; scenes stay readable. |
 | 2 Growing | Plant, water, grow, harvest, and countable basket. | Each plant yields one carrot; repeated clicks cannot duplicate harvest; moving a bed preserves its crops. |
 | 3 Picnics | Three opening situations, editable plates, bell, creature feedback, and success. | Transfers conserve food; insufficient and extra servings remain editable; successful consumption happens once. |
 | 4 Guided progression | Replayable onboarding, optional hints, two quantity settings, discoveries, and repeatable requests. | Guidance explains controls; all requests are feasible; decoration remains available; difficulty changes preserve progress. |
@@ -143,4 +143,4 @@ These are expansion directions, not prototype requirements or a fixed curriculum
 
 Begin with milestone 0, then milestone 1. The source repository is jvong11/little-landkeepers. Cloudflare Pages integration is connected and verified, with main for production and a separate dev preview. The first reviewable gameplay milestone is a browser scene where a child can place, move, rotate, and remove building pieces with clear feedback.
 
-Placed pieces first open an on-garden actions menu with a four-direction Move icon and Cancel. Clicking away dismisses the menu. Move starts a pointer-following preview (tap a destination on touch), then the destination uses Move here / Cancel confirmation. The original remains in place until confirmed.
+Placed pieces first open an on-garden actions menu with a four-direction Move icon and Cancel. Clicking away dismisses the menu. Move starts a pointer-following preview (tap a destination on touch). A valid destination tap moves immediately. Cancel or Escape preserves the original during preview; Undo move restores the previous position and rotation after placement. Invalid taps keep the preview active.

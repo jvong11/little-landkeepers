@@ -12,22 +12,21 @@ function worldCenter(object: Pick<GardenObject, 'kind' | 'rotation' | 'x' | 'z'>
   return [object.x + width / 2 - BOARD.width / 2, 0, object.z + depth / 2 - BOARD.depth / 2];
 }
 function ResponsiveCamera({ onMoveAnchor }: { onMoveAnchor: (point: { x: number; y: number } | null) => void }) {
-  const { draft, objects, selectedId } = useBuildingStore((s) => s.garden);
+  const { objects, selectedId } = useBuildingStore((s) => s.garden);
   const { camera, size, invalidate } = useThree();
   useEffect(() => {
     const ortho = camera as THREE.OrthographicCamera;
     ortho.zoom = gardenZoom(size.width, size.height);
     ortho.lookAt(0, 0, 0);
     ortho.updateProjectionMatrix();
-    const selected = objects.find((o) => o.id === selectedId);
-    const target = draft?.movingId && draft.pending && draft.position ? { kind: draft.kind, rotation: draft.rotation, ...draft.position } : selected;
+    const target = objects.find((o) => o.id === selectedId);
     if (target) {
       const center = worldCenter(target);
       const projected = new THREE.Vector3(center[0], 1, center[2]).project(ortho);
       onMoveAnchor({ x: (projected.x + 1) * size.width / 2, y: (1 - projected.y) * size.height / 2 });
     } else onMoveAnchor(null);
     invalidate();
-  }, [camera, size.width, size.height, invalidate, draft, objects, selectedId, onMoveAnchor]);
+  }, [camera, size.width, size.height, invalidate, objects, selectedId, onMoveAnchor]);
   return null;
 }
 function GroundMark({ c, color, opacity = .3 }: { c: Cell; color: string; opacity?: number }) {
@@ -98,7 +97,7 @@ function Garden({ onReady, onMoveAnchor }: { onReady: () => void; onMoveAnchor: 
       </group>
     </>}
     <mesh position={[0, .005, 0]} rotation={[-Math.PI / 2, 0, 0]} onClick={chooseCell} onPointerMove={(event) => {
-      if (draft && !draft.pending && event.pointerType === 'mouse') {
+      if (draft && event.pointerType === 'mouse') {
         const next = cellAt(event);
         if (!draft.position || key(draft.position) !== key(next)) dispatch({ type: 'preview', position: next });
       }

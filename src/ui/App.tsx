@@ -19,20 +19,6 @@ function PieceMenu({ anchor }: { anchor: Anchor }) {
     </div>
   </section>;
 }
-function MoveConfirmation({ anchor }: { anchor: Anchor }) {
-  const garden = useBuildingStore((s) => s.garden);
-  const dispatch = useBuildingStore((s) => s.dispatch);
-  const button = useRef<HTMLButtonElement>(null);
-  const draft = garden.draft;
-  const error = draft ? placementError(garden.objects, draft) : null;
-  useEffect(() => { if (draft?.pending) button.current?.focus(); }, [draft?.pending, !!anchor]);
-  if (!draft?.movingId || !draft.pending || !anchor) return null;
-  return <section className="move-popup" role="dialog" aria-label="Confirm move" style={{ left: `clamp(150px, ${anchor.x}px, calc(100% - 150px))`, top: `clamp(245px, ${anchor.y - 22}px, calc(100% - 155px))` }}>
-    <h2>{error ? 'Try another spot' : 'Move it here?'}</h2>
-    <p>{error ?? 'Pip likes this spot. Keep the change?'}</p>
-    <div><button ref={button} className="primary" disabled={!!error} onClick={() => dispatch({ type: 'confirm' })}>✓ Move here</button><button className="secondary" onClick={() => dispatch({ type: 'cancel' })}>✕ Cancel</button></div>
-  </section>;
-}
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => { dialog.current?.showModal(); }, []);
@@ -80,7 +66,7 @@ export function App() {
   };
   const tip = status === 'loading' ? 'Preparing the garden…' : status === 'error' ? 'The garden needs a WebGL-capable browser.'
     : !hasHome ? draft?.position && error ? error : draft?.kind === 'home' ? 'Hi, I’m Pip! Tap a space to build my home.' : 'Pip needs a cozy home. Choose Home from your tray.'
-    : garden.selectedId ? 'Choose Move to find a new spot, or tap away to keep exploring.' : draft ? draft.position && error ? error : draft.movingId ? 'Move your pointer to preview a spot, then tap and choose Move here.' : `Tap a space to place your ${items[draft.kind].name.toLowerCase()}.` : garden.message;
+    : garden.selectedId ? 'Choose Move to find a new spot, or tap away to keep exploring.' : draft ? draft.position && error ? error : draft.movingId ? 'Move your pointer to preview a spot, then tap to move it.' : `Tap a space to place your ${items[draft.kind].name.toLowerCase()}.` : garden.message;
   return <main ref={shell} className="game-shell" onKeyDown={keyboard} onPointerDownCapture={(event) => {
     if (garden.selectedId && !(event.target instanceof Element && event.target.closest('.piece-menu'))) dispatch({ type: 'dismiss' });
   }}>
@@ -99,16 +85,16 @@ export function App() {
       {draft.movingId && <button onClick={() => dispatch({ type: 'remove' })}>↩ Return to tray</button>}
       <button onClick={() => dispatch({ type: 'cancel' })}>✕ Cancel</button>
     </div>}
-    <PieceMenu anchor={anchor} /><MoveConfirmation anchor={anchor} />
-    {!draft && !garden.selectedId && garden.lastPlacementId && <button className="undo-button" onClick={() => dispatch({ type: 'undo' })}>↶ Undo placement</button>}
+    <PieceMenu anchor={anchor} />
+    {!draft && !garden.selectedId && (garden.lastPlacementId || garden.lastMove) && <button className="undo-button" onClick={() => dispatch({ type: 'undo' })}>↶ {garden.lastMove ? 'Undo move' : 'Undo placement'}</button>}
     <section className="tray" aria-label="Building tray"><div className="tray-heading"><h2>{hasHome ? 'What will you make next?' : 'A home for Pip'}</h2><span>{hasHome ? 'Choose a piece · tap to build' : 'Place Pip’s home to open your tray'}</span></div><div className="tray-items">{(Object.keys(items) as ItemKind[]).map((kind) => {
       const item = items[kind]; const available = item.supply - garden.objects.filter((o) => o.kind === kind).length;
       return <button key={kind} className={`tray-piece ${draft?.kind === kind && !draft.movingId ? 'active' : ''}`} aria-label={`Build ${item.name}`} aria-pressed={draft?.kind === kind && !draft.movingId} disabled={!canBuild(garden, kind) || status !== 'ready'} onClick={() => dispatch({ type: 'choose', kind })}><span className={`piece-icon ${kind}`} aria-hidden="true">{item.icon}</span><strong>{item.name}</strong><span className="availability">{!hasHome && kind !== 'home' ? 'After Pip’s home' : `${available} in tray`}</span></button>;
     })}</div></section>
     <small className="preview-note">Your garden resets on reload while we build saving.</small>
     {panel === 'help' && <Modal title="Let’s build together" onClose={() => setPanel(null)}>
-      <ol><li>Choose a piece from the tray.</li><li>Turn it if you like, then tap a clear space. It builds right away!</li><li>To move a piece, tap it, choose the four-arrow <strong>Move</strong> button, then preview and tap a new spot. Choose <strong>Move here</strong> in the pop-up.</li></ol>
-      <p>Tap away or choose Cancel to close a piece’s menu. Cancel keeps a moved piece in its original spot. Undo returns your newest piece to the tray. The growing patch, picnic blanket, and entrance stay open for friends.</p>
+      <ol><li>Choose a piece from the tray.</li><li>Turn it if you like, then tap a clear space. It builds right away!</li><li>To move a piece, tap it, choose the four-arrow <strong>Move</strong> button, then preview and tap a new spot. It moves right away!</li></ol>
+      <p>Tap away or choose Cancel to close a piece’s menu. Cancel or Escape keeps a piece in its original spot while you are moving it. Undo move restores its previous spot and turn. Undo placement returns your newest piece to the tray. The growing patch, picnic blanket, and entrance stay open for friends.</p>
       <p>Keyboard: focus the garden, use arrows to position a piece, R to turn, Enter to place, and Escape to cancel.</p>
     </Modal>}
     {panel === 'pieces' && <Modal title="Garden pieces" onClose={() => setPanel(null)}><p>{garden.objects.length ? 'Choose a piece to move or return to the tray.' : 'Your clearing is ready. Let’s build Pip a home!'}</p><ul className="object-list">{garden.objects.map((object, i) => <li key={object.id}><button onClick={() => { dispatch({ type: 'select', id: object.id }); setPanel(null); }} aria-label={`Move ${items[object.kind].name} ${i + 1}`}><span aria-hidden="true">{items[object.kind].icon}</span> {items[object.kind].name}<span aria-hidden="true">↗</span></button></li>)}</ul></Modal>}
