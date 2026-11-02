@@ -1,0 +1,7 @@
+{
+  "name": "Little Landkeepers",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:24-bookworm",
+  "postCreateCommand": "nvm install && nvm use && npm ci",
+  "forwardPorts": [5173],
+  "portsAttributes": { "5173": { "label": "Little Landkeepers", "onAutoForward": "notify", "protocol": "http" } }
+}

@@ -1,0 +1,58 @@
+# Development and testing
+
+## Start in Codespaces
+
+Create a Codespace from the setup branch during review, then from dev after merging.
+The container installs Node using .nvmrc and runs npm ci. Start the app with npm run dev.
+Open port 5173 in the Ports panel. It stays fixed; if occupied, the command fails instead of silently switching ports.
+Keep forwarded ports private for development. Use Cloudflare previews for family testing.
+
+## Commands
+
+- npm ci: install exact locked dependencies.
+- npm run dev: immediate development preview on port 5173.
+- npm run typecheck: check all TypeScript source and test configuration.
+- npm test: game rule/content tests.
+- npm run build: type checking and production build to dist.
+- npm run preview: serve a completed build on port 4173.
+- npx playwright install --with-deps chromium: first-time browser test setup.
+- npm run test:e2e: desktop and tablet-sized Chromium smoke checks against dist.
+
+Run npm run build before browser tests. Automated tablet emulation does not replace actual tablet and school laptop testing.
+The first rule tests validate picnic content constraints, including the whole-request quantity limit.
+The setup has no planting, placement, or persistence interactions yet.
+
+## Branches and review
+
+main holds approved releases. dev is the integration and ongoing family-testing branch.
+Create feature branches from dev and open PRs back to dev. Promote dev to main after review.
+CI checks pull requests to both branches and pushes to main/dev.
+Do not assume required status checks are enforced until branch protections have been configured.
+
+## Cloudflare Pages setup
+
+Connect jvong11/little-landkeepers through Cloudflare Pages Git integration.
+Use production branch main; framework Vite; build command npm run build; build output dist.
+Set NODE_VERSION to 24.22.1 if the build environment does not pick up .node-version.
+Enable preview deployments for dev and feature branches. Use the stable dev branch alias for ongoing playtests.
+No server runtime, database, API keys, or Cloudflare token in the repository are needed for this static build.
+Check deployment logs and the actual preview URL before considering hosting verified.
+Cloudflare integration has not been configured by committing these files.
+
+## First deployment verification
+
+Open the deployed build on computer and tablet. Verify the 3D garden renders, there is no horizontal overflow,
+and browser logs have no application errors. Test a PR update and the dev branch alias before using them for reviews.
+Browser saves will be separate across dev, PR, production, and Codespaces origins.
+
+## Architecture
+
+src/game contains pure rules and configurable content. src/world renders committed game state.
+src/ui owns interface and guidance. src/storage will provide the persistence adapter.
+Keep movement/animation updates out of frequent React state changes. Avoid quiz gates, timers, or paid progression.
+No account service or analytics is configured. Use temporary geometry until interactions are proven.
+
+## Next milestone
+
+Implement data-driven footprints and grid placement, with confirm/cancel, move, rotation, return-to-tray,
+obstruction feedback, and safe access to essential garden areas. Verify real mouse and touch input.
