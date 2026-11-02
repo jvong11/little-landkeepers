@@ -20,7 +20,9 @@ Keep forwarded ports private for development. Use Cloudflare previews for family
 
 Run npm run build before browser tests. Automated tablet emulation does not replace actual tablet and school laptop testing.
 The first rule tests validate picnic content constraints, including the whole-request quantity limit.
-The setup has no planting, placement, or persistence interactions yet.
+The builder supports placement and editing; planting and persistence are later work.
+Placement tests cover footprints, overlaps, shared terrain, reachable doors, inventory, and transactional cancellation.
+Browser tests pick actual canvas cells with mouse and touch and exercise keyboard placement.
 
 ## Branches and review
 
@@ -37,7 +39,7 @@ Set NODE_VERSION to 24.22.1 if the build environment does not pick up .node-vers
 Enable preview deployments for dev and feature branches. Use the stable dev branch alias for ongoing playtests.
 No server runtime, database, API keys, or Cloudflare token in the repository are needed for this static build.
 Check deployment logs and the actual preview URL before considering hosting verified.
-Cloudflare integration has not been configured by committing these files.
+Cloudflare Git integration is connected and verified. Production uses main; dev has a separate stable preview at https://dev.little-landkeepers.pages.dev/. All non-production branches deploy previews.
 
 ## First deployment verification
 
@@ -54,5 +56,15 @@ No account service or analytics is configured. Use temporary geometry until inte
 
 ## Next milestone
 
-Implement data-driven footprints and grid placement, with confirm/cancel, move, rotation, return-to-tray,
-obstruction feedback, and safe access to essential garden areas. Verify real mouse and touch input.
+Milestone 1 implements data-driven footprints and grid placement, confirm/cancel, movement, rotation, return-to-tray, obstruction feedback, and reachable doors and shared areas. Paths occupy their own layer and may run beneath structures.
+
+Next: planting, watering, growing, and harvesting. Add crop state before allowing planted beds to return to the tray; moving a planted bed must preserve its contents. Continue real-device testing with children.
+
+## Building review checklist
+
+1. Choose a tray item, tap a space, turn it, and confirm.
+2. Tap a placed piece or select it in Garden pieces. Move it and cancel; it must remain in its original position.
+3. Move and confirm, then return it to the tray. Availability must increase.
+4. Try overlaps, garden edges, shared spaces, and blocking a front door; each must explain the problem and disable confirmation.
+5. Try Help, keyboard arrows, and Placement arrows on computer and tablet.
+6. Reload to confirm this milestone intentionally starts fresh; browser saving is not implemented yet.

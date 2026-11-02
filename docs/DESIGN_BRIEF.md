@@ -141,4 +141,4 @@ These are expansion directions, not prototype requirements or a fixed curriculum
 
 ## Implementation handoff
 
-Begin with milestone 0, then milestone 1. The source repository is jvong11/little-landkeepers. Cloudflare Pages integration still needs to be connected and verified. The first reviewable gameplay milestone is a browser scene where a child can place, move, rotate, and remove building pieces with clear feedback.
+Begin with milestone 0, then milestone 1. The source repository is jvong11/little-landkeepers. Cloudflare Pages integration is connected and verified, with main for production and a separate dev preview. The first reviewable gameplay milestone is a browser scene where a child can place, move, rotate, and remove building pieces with clear feedback.

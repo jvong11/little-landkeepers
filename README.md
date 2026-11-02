@@ -4,8 +4,9 @@ A browser garden game where children learn through caring, building, and experim
 
 ## Current milestone
 
-Project foundation: React, TypeScript, Vite, Three.js / React Three Fiber, and a temporary orthographic garden scene.
-The preview is an initial rendering check; building, growing, picnics, and browser saves are subsequent milestones.
+Garden building: choose homes, beds, paths, flowers, lanterns, and benches; preview, turn, confirm, move, or return them to the tray. Shared growing/picnic spaces and reachable home doors are protected.
+
+Use the Help button for controls. Tap-to-place, mouse, keyboard arrows, and placement buttons are supported. This preview uses temporary models and resets on reload. Growing, picnics, and browser saves are later milestones.
 
 ## Run locally or in Codespaces
 
@@ -38,3 +39,9 @@ IndexedDB planned for browser-local saves. No backend or accounts in the prototy
 Cloudflare Pages publishes dist after npm run build. Git integration must be connected separately.
 
 All rights reserved pending an explicit project license. Public source visibility does not grant reuse rights.
+
+## Live environments
+
+- Production from main: https://little-landkeepers.pages.dev/
+- Integration testing from dev: https://dev.little-landkeepers.pages.dev/
+- Feature branches receive Cloudflare previews; review these before merging.
