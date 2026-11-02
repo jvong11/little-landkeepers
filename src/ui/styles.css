@@ -1,0 +1,20 @@
+:root { font-family: ui-rounded, 'Trebuchet MS', system-ui, sans-serif; color: #344b32; background: #f6f4e9; font-synthesis: none; text-rendering: optimizeLegibility; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+.shell { max-width: 1440px; margin: auto; padding: 28px 5vw 20px; }
+.masthead { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.brand { color: inherit; text-decoration: none; font-size: clamp(18px, 2vw, 25px); font-weight: 800; letter-spacing: -.7px; }
+.brand span { color: #b76b43; font-size: 32px; vertical-align: middle; margin-right: 8px; }
+.badge { font-size: 12px; font-weight: 700; padding: 8px 13px; border: 1px solid #d8dec8; border-radius: 30px; white-space: nowrap; }
+.intro { position: relative; z-index: 1; padding-top: 48px; pointer-events: none; }
+.eyebrow { text-transform: uppercase; letter-spacing: 2px; font-size: 11px; font-weight: 800; color: #7c6847; }
+h1 { font-size: clamp(36px, 5vw, 65px); line-height: 1.05; letter-spacing: -2px; margin: 15px 0; }
+.intro > p:last-child { color: #68715b; line-height: 1.7; font-size: 16px; }
+.garden { position: relative; height: clamp(350px, 56vw, 620px); margin-top: -160px; margin-left: 24%; background: radial-gradient(ellipse at center, #e5ebd2 0%, transparent 70%); }
+.scene-note { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: #fffaf0; border: 1px solid #dedfca; border-radius: 18px; padding: 12px 20px; color: #526449; font-size: 13px; white-space: nowrap; }
+.scene-message { padding: 25px; max-width: 350px; margin: 100px auto; line-height: 1.6; }
+footer { padding-top: 15px; border-top: 1px solid #dce0ce; display: flex; align-items: baseline; justify-content: space-between; gap: 20px; }
+footer span { font-weight: 700; font-size: 14px; }
+footer p { color: #6c735f; font-size: 13px; line-height: 1.5; }
+a:focus-visible { outline: 3px solid #b76b43; outline-offset: 5px; border-radius: 4px; }
+@media (max-width: 720px) { .shell { padding: 20px; } .intro { padding-top: 30px; } .garden { margin: -10px -20px 0; height: 380px; } footer { display: block; } .scene-note { font-size: 12px; padding: 10px 14px; } }
