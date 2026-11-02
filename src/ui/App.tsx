@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { canBuild, items, placementError, type ItemKind } from '../game/building';
 import { useBuildingStore } from '../game/buildingStore';
+import { hasCrops } from '../game/growing';
+import { BasketContents, GrowingControls, SoilSpaces, useGrowingClock } from './GrowingControls';
 import { GardenScene } from '../world/GardenScene';
 
 type Anchor = { x: number; y: number } | null;
@@ -27,8 +29,9 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   </dialog>;
 }
 export function App() {
+  useGrowingClock();
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [panel, setPanel] = useState<'help' | 'pieces' | null>(null);
+  const [panel, setPanel] = useState<'help' | 'pieces' | 'basket' | 'soil' | null>(null);
   const [anchor, setAnchor] = useState<Anchor>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [screenNote, setScreenNote] = useState('');
@@ -39,6 +42,8 @@ export function App() {
   const onReady = useCallback(() => setStatus('ready'), []);
   const onFailure = useCallback(() => setStatus('error'), []);
   const onMoveAnchor = useCallback((point: Anchor) => setAnchor((old) => old?.x === point?.x && old?.y === point?.y ? old : point), []);
+  const tool = useBuildingStore((s) => s.tool);
+  const growing = useBuildingStore((s) => s.growing);
   const draft = garden.draft;
   useEffect(() => { if (draft?.movingId) world.current?.focus({ preventScroll: true }); }, [draft?.movingId]);
   const error = draft ? placementError(garden.objects, draft) : null;
@@ -57,7 +62,7 @@ export function App() {
   };
   const keyboard = (event: KeyboardEvent) => {
     if (panel) return;
-    if (event.key === 'Escape' && (draft || garden.selectedId)) { event.preventDefault(); dispatch({ type: 'cancel' }); return; }
+    if (event.key === 'Escape' && (draft || garden.selectedId || tool !== 'build')) { event.preventDefault(); dispatch({ type: 'tool', tool: 'build' }); return; }
     if (!draft || event.target instanceof HTMLButtonElement) return;
     const directions: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
     if (directions[event.key]) { event.preventDefault(); const [dx, dz] = directions[event.key]; dispatch({ type: 'nudge', dx, dz }); }
@@ -66,6 +71,9 @@ export function App() {
   };
   const tip = status === 'loading' ? 'Preparing the garden…' : status === 'error' ? 'The garden needs a WebGL-capable browser.'
     : !hasHome ? draft?.position && error ? error : draft?.kind === 'home' ? 'Hi, I’m Pip! Tap a space to build my home.' : 'Pip needs a cozy home. Choose Home from your tray.'
+    : tool !== 'build' ? growing.message
+    : garden.message.startsWith('This bed has plants.') ? garden.message
+    : draft?.movingId && hasCrops(growing, draft.movingId) ? 'Plants stay with this bed. Tap a new spot to move it. Harvest its plants before returning it to the tray.'
     : garden.selectedId ? 'Choose Move to find a new spot, or tap away to keep exploring.' : draft ? draft.position && error ? error : draft.movingId ? 'Move your pointer to preview a spot, then tap to move it.' : `Tap a space to place your ${items[draft.kind].name.toLowerCase()}.` : garden.message;
   return <main ref={shell} className="game-shell" onKeyDown={keyboard} onPointerDownCapture={(event) => {
     if (garden.selectedId && !(event.target instanceof Element && event.target.closest('.piece-menu'))) dispatch({ type: 'dismiss' });
@@ -82,20 +90,24 @@ export function App() {
     {screenNote && <div className="screen-note" role="status">{screenNote}<button aria-label="Dismiss fullscreen message" onClick={() => setScreenNote('')}>✕</button></div>}
     {draft && <div className="edit-tools" aria-label="Placement tools">
       <span>{items[draft.kind].name}</span><button onClick={() => dispatch({ type: 'rotate' })}>↻ Turn</button>
-      {draft.movingId && <button onClick={() => dispatch({ type: 'remove' })}>↩ Return to tray</button>}
+      {draft.movingId && <button disabled={hasCrops(growing, draft.movingId)} title={hasCrops(growing, draft.movingId) ? 'Harvest this bed’s plants before returning it to the tray.' : undefined} onClick={() => dispatch({ type: 'remove' })}>↩ Return to tray</button>}
       <button onClick={() => dispatch({ type: 'cancel' })}>✕ Cancel</button>
     </div>}
+    <GrowingControls onBasket={() => setPanel('basket')} onSoil={() => setPanel('soil')} />
     <PieceMenu anchor={anchor} />
-    {!draft && !garden.selectedId && (garden.lastPlacementId || garden.lastMove) && <button className="undo-button" onClick={() => dispatch({ type: 'undo' })}>↶ {garden.lastMove ? 'Undo move' : 'Undo placement'}</button>}
-    <section className="tray" aria-label="Building tray"><div className="tray-heading"><h2>{hasHome ? 'What will you make next?' : 'A home for Pip'}</h2><span>{hasHome ? 'Choose a piece · tap to build' : 'Place Pip’s home to open your tray'}</span></div><div className="tray-items">{(Object.keys(items) as ItemKind[]).map((kind) => {
+    {tool === 'build' && !draft && !garden.selectedId && (garden.lastPlacementId || garden.lastMove) && <button className="undo-button" disabled={!!garden.lastPlacementId && hasCrops(growing, garden.lastPlacementId)} title={garden.lastPlacementId && hasCrops(growing, garden.lastPlacementId) ? 'Harvest this bed’s plants before undoing its placement.' : undefined} onClick={() => dispatch({ type: 'undo' })}>↶ {garden.lastMove ? 'Undo move' : 'Undo placement'}</button>}
+    {tool === 'build' && <section className="tray" aria-label="Building tray"><div className="tray-heading"><h2>{hasHome ? 'What will you make next?' : 'A home for Pip'}</h2><span>{hasHome ? 'Choose a piece · tap to build' : 'Place Pip’s home to open your tray'}</span></div><div className="tray-items">{(Object.keys(items) as ItemKind[]).map((kind) => {
       const item = items[kind]; const available = item.supply - garden.objects.filter((o) => o.kind === kind).length;
       return <button key={kind} className={`tray-piece ${draft?.kind === kind && !draft.movingId ? 'active' : ''}`} aria-label={`Build ${item.name}`} aria-pressed={draft?.kind === kind && !draft.movingId} disabled={!canBuild(garden, kind) || status !== 'ready'} onClick={() => dispatch({ type: 'choose', kind })}><span className={`piece-icon ${kind}`} aria-hidden="true">{item.icon}</span><strong>{item.name}</strong><span className="availability">{!hasHome && kind !== 'home' ? 'After Pip’s home' : `${available} in tray`}</span></button>;
-    })}</div></section>
+    })}</div></section>}
+    {panel === 'basket' && <Modal title="Your carrot basket" onClose={() => setPanel(null)}><BasketContents /></Modal>}
+    {panel === 'soil' && <Modal title="Soil spaces" onClose={() => setPanel(null)}><SoilSpaces /></Modal>}
     <small className="preview-note">Your garden resets on reload while we build saving.</small>
     {panel === 'help' && <Modal title="Let’s build together" onClose={() => setPanel(null)}>
-      <ol><li>Choose a piece from the tray.</li><li>Turn it if you like, then tap a clear space. It builds right away!</li><li>To move a piece, tap it, choose the four-arrow <strong>Move</strong> button, then preview and tap a new spot. It moves right away!</li></ol>
+      <ol><li>Choose a piece from the tray.</li><li>Turn it if you like, then tap a clear space. It builds right away!</li><li>To move a piece, tap it, choose the four-arrow <strong>Move</strong> button, then preview and tap a new spot. It moves right away!</li><li>Choose Seeds and tap empty soil. Choose Water and tap the seed. When an orange carrot appears, choose Harvest and tap it.</li></ol>
       <p>Tap away or choose Cancel to close a piece’s menu. Cancel or Escape keeps a piece in its original spot while you are moving it. Undo move restores its previous spot and turn. Undo placement returns your newest piece to the tray. The growing patch, picnic blanket, and entrance stay open for friends.</p>
-      <p>Keyboard: focus the garden, use arrows to position a piece, R to turn, Enter to place, and Escape to cancel.</p>
+      <p>Each plant gives one carrot. Seeds and water never run out. The two soil spaces by Pip and every garden bed can grow carrots. Moving a bed keeps its plants; harvest them before returning the bed to the tray. Open Basket to count your carrots.</p>
+      <p>Keyboard: choose a growing tool, then use Soil spaces for labeled buttons. For building, focus the garden, use arrows to position a piece, R to turn, Enter to place, and Escape to cancel.</p>
     </Modal>}
     {panel === 'pieces' && <Modal title="Garden pieces" onClose={() => setPanel(null)}><p>{garden.objects.length ? 'Choose a piece to move or return to the tray.' : 'Your clearing is ready. Let’s build Pip a home!'}</p><ul className="object-list">{garden.objects.map((object, i) => <li key={object.id}><button onClick={() => { dispatch({ type: 'select', id: object.id }); setPanel(null); }} aria-label={`Move ${items[object.kind].name} ${i + 1}`}><span aria-hidden="true">{items[object.kind].icon}</span> {items[object.kind].name}<span aria-hidden="true">↗</span></button></li>)}</ul></Modal>}
   </main>;

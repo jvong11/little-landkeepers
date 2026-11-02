@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { buildingReducer, createBuildingState, type BuildingAction, type BuildingState } from './building';
-interface BuildingStore { garden: BuildingState; dispatch: (action: BuildingAction) => void }
+import { createGameState, gardenReducer, type GameAction, type GameState } from './garden';
+interface BuildingStore extends GameState { dispatch: (action: GameAction) => void }
 export const useBuildingStore = create<BuildingStore>((set) => ({
-  garden: createBuildingState(),
-  dispatch: (action) => set((state) => ({ garden: buildingReducer(state.garden, action) })),
+  ...createGameState(),
+  dispatch: (action) => set((state) => gardenReducer(state, action)),
 }));

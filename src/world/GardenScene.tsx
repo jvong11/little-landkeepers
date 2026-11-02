@@ -4,6 +4,8 @@ import * as THREE from 'three';
 import { BOARD, cells, footprint, growing, items, key, picnic, placementError, type Cell, type GardenObject } from '../game/building';
 import { useBuildingStore } from '../game/buildingStore';
 import { CAMERA_POSITION, gardenZoom } from './camera';
+import { GrowingSoil } from './GrowingSoil';
+import { PATCH_ID, soilId } from '../game/growing';
 import { PieceModel, Rabbit, Tree } from './GardenPieces';
 
 const noRaycast = () => {};
@@ -38,6 +40,7 @@ function Garden({ onReady, onMoveAnchor }: { onReady: () => void; onMoveAnchor: 
   const garden = useBuildingStore((s) => s.garden);
   const dispatch = useBuildingStore((s) => s.dispatch);
   const draft = garden.draft;
+  const tool = useBuildingStore((s) => s.tool);
   const previewPosition = draft?.position;
   const preview = draft && previewPosition ? { ...draft, position: previewPosition } : null;
   const error = preview ? placementError(garden.objects, preview) : null;
@@ -63,6 +66,7 @@ function Garden({ onReady, onMoveAnchor }: { onReady: () => void; onMoveAnchor: 
     <mesh position={[0, -.55, 0]}><boxGeometry args={[10.1, .2, 8.1]} /><meshStandardMaterial color="#b99768" /></mesh>
     {draft && <lineSegments geometry={grid} raycast={noRaycast}><lineBasicMaterial color="#6c8656" transparent opacity={.35} /></lineSegments>}
     {growing.map((c) => <GroundMark key={`grow-${key(c)}`} c={c} color="#cfa46a" />)}
+    {growing.map((c, i) => <GrowingSoil key={i} id={soilId(PATCH_ID, i)} position={[c.x + .5 - BOARD.width / 2, .04, c.z + .5 - BOARD.depth / 2]} />)}
     {picnic.map((c) => <GroundMark key={`picnic-${key(c)}`} c={c} color="#e2bd8d" opacity={.55} />)}
     <GroundMark c={{ x: 5, z: 7 }} color="#e2d2a5" opacity={.8} />
 
@@ -74,10 +78,12 @@ function Garden({ onReady, onMoveAnchor }: { onReady: () => void; onMoveAnchor: 
     {[[-5.6, -3.6, .95], [-2.6, -4.7, 1.1], [1.8, -4.8, .9], [5.6, -2.5, 1], [-5.7, 1.5, .7]].map(([x, z, size]) => <Tree key={x} x={x} z={z} size={size} />)}
     {garden.objects.map((object) => <group key={object.id} position={worldCenter(object)} rotation={[0, object.rotation * Math.PI / 2, 0]} onClick={(event) => {
       event.stopPropagation();
+      if (tool !== 'build') return;
       if (draft) dispatch({ type: 'tap', position: { x: object.x, z: object.z } });
       else dispatch({ type: 'inspect', id: object.id });
     }}>
       <PieceModel kind={object.kind} />
+      {object.kind === 'bed' && [0, 1].map((slot) => <GrowingSoil key={slot} id={soilId(object.id, slot)} position={[slot - .5, .18, 0]} />)}
     </group>)}
     {draft?.movingId && garden.objects.filter((o) => o.id === draft.movingId).flatMap((o) => cells(o)).map((c) => <GroundMark key={`selected-${key(c)}`} c={c} color="#e0b453" opacity={.7} />)}
     {ghost && <>
