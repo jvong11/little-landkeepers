@@ -9,7 +9,7 @@ function PieceMenu({ anchor }: { anchor: Anchor }) {
   const dispatch = useBuildingStore((s) => s.dispatch);
   const selected = garden.objects.find((o) => o.id === garden.selectedId);
   const menu = useRef<HTMLElement>(null);
-  useEffect(() => { if (selected) menu.current?.querySelector('button')?.focus(); }, [selected?.id]);
+  useEffect(() => { if (selected) menu.current?.querySelector('button')?.focus(); }, [selected?.id, !!anchor]);
   if (!selected || !anchor) return null;
   return <section ref={menu} className="move-popup piece-menu" role="dialog" aria-label="Piece actions" style={{ left: `clamp(150px, ${anchor.x}px, calc(100% - 150px))`, top: `clamp(245px, ${anchor.y - 22}px, calc(100% - 155px))` }}>
     <h2>{items[selected.kind].name}</h2><div>
@@ -47,12 +47,14 @@ export function App() {
   const [fullscreen, setFullscreen] = useState(false);
   const [screenNote, setScreenNote] = useState('');
   const shell = useRef<HTMLElement>(null);
+  const world = useRef<HTMLElement>(null);
   const garden = useBuildingStore((s) => s.garden);
   const dispatch = useBuildingStore((s) => s.dispatch);
   const onReady = useCallback(() => setStatus('ready'), []);
   const onFailure = useCallback(() => setStatus('error'), []);
   const onMoveAnchor = useCallback((point: Anchor) => setAnchor((old) => old?.x === point?.x && old?.y === point?.y ? old : point), []);
   const draft = garden.draft;
+  useEffect(() => { if (draft?.movingId) world.current?.focus({ preventScroll: true }); }, [draft?.movingId]);
   const error = draft ? placementError(garden.objects, draft) : null;
   const hasHome = garden.objects.some((o) => o.kind === 'home');
   useEffect(() => {
@@ -82,7 +84,7 @@ export function App() {
   return <main ref={shell} className="game-shell" onKeyDown={keyboard} onPointerDownCapture={(event) => {
     if (garden.selectedId && !(event.target instanceof Element && event.target.closest('.piece-menu'))) dispatch({ type: 'dismiss' });
   }}>
-    <section className="garden" aria-label="Garden building area" tabIndex={0} data-testid="garden-world" data-render-status={status}>
+    <section ref={world} className="garden" aria-label="Garden building area" tabIndex={0} data-testid="garden-world" data-render-status={status}>
       <GardenScene onReady={onReady} onFailure={onFailure} onMoveAnchor={onMoveAnchor} />
     </section>
     <header className="game-header"><h1><span aria-hidden="true">✿</span> Little Landkeepers</h1><nav aria-label="Game controls">
