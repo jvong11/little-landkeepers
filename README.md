@@ -4,8 +4,9 @@ A browser garden game where children learn through caring, building, and experim
 
 ## Current milestone
 
-Project foundation: React, TypeScript, Vite, Three.js / React Three Fiber, and a temporary orthographic garden scene.
-The preview is an initial rendering check; building, growing, picnics, and browser saves are subsequent milestones.
+Garden building: choose homes, beds, paths, flowers, lanterns, and benches; turn and tap to build immediately, or move existing pieces immediately after choosing Move, with Undo move available. Shared growing/picnic spaces and reachable home doors are protected. Choose Seeds, Water, and Harvest to grow carrots in the permanent patch or built beds; each plant yields one countable carrot.
+
+Use the Help button for controls. Tap-to-place, mouse, keyboard arrows, and placement buttons are supported. The game fills the browser, starts with an empty clearing and one home for Pip, and offers optional browser fullscreen. New placements have Undo. This build uses temporary models and resets on reload. Growing, picnics, and browser saves are later milestones.
 
 ## Run locally or in Codespaces
 
@@ -38,3 +39,13 @@ IndexedDB planned for browser-local saves. No backend or accounts in the prototy
 Cloudflare Pages publishes dist after npm run build. Git integration must be connected separately.
 
 All rights reserved pending an explicit project license. Public source visibility does not grant reuse rights.
+
+## Live environments
+
+- Production from main: https://little-landkeepers.pages.dev/
+- Integration testing from dev: https://dev.little-landkeepers.pages.dev/
+- Feature branches receive Cloudflare previews; review these before merging.
+
+Placed pieces first open an on-garden actions menu with a four-direction Move icon and Cancel. Clicking away dismisses the menu. Move starts a pointer-following preview (tap a destination on touch). A valid destination tap moves immediately. Cancel or Escape preserves the original during preview; Undo move restores the previous position and rotation after placement. Invalid taps keep the preview active.
+
+Growing milestone: unlimited seeds and water, two soil spaces per bed, short active-tab growth, repeatable harvesting, and a countable basket. Crops are keyed to stable bed IDs and local slots, so moving or turning a bed and undoing its move preserves its plants. Planted beds cannot return to the tray or be removed by placement undo until harvested. Soil spaces provides a labeled keyboard alternative to canvas interaction. Saving and picnics are not implemented yet.

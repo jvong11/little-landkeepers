@@ -20,17 +20,17 @@ Approved garden and asset concept images are retained separately by the project 
 
 ## Player actions
 
-The player acts directly as caretaker. Creatures move around the garden; controlling a walking player avatar is outside scope. Tap to select and tap to place is the primary interaction. Dragging may be added as an optional shortcut.
+The game fills the browser viewport with floating controls and a building tray. The player acts directly as caretaker. Creatures move around the garden; controlling a walking player avatar is outside scope. Tap to select and tap to place is the primary interaction. Dragging may be added as an optional shortcut.
 
 | Action | Interaction and result |
 | --- | --- |
-| Build | Select an item, preview its ground footprint, choose a valid position, then confirm or cancel. Invalid placement explains the obstruction. |
+| Build | Select an item, turn it if desired, and tap a valid ground space to build immediately. Undo reverses the latest new placement. Invalid placement explains the obstruction without building. |
 | Plant | Select carrot seeds and an empty soil cell. One seed produces one carrot. |
 | Water | Select the can and a planted cell. One watering starts growth; show wet soil and a visible growth state. |
 | Harvest | Select a ripe carrot. Transfer exactly one carrot to the basket and clear that cell for replanting. |
 | Prepare food | Select a carrot from the basket and a plate. Transfer one carrot. Food can also move between plates or back into the basket. |
 | Ring the picnic bell | Guests inspect their meals. If every plate meets its request, the picnic begins; otherwise the arrangement remains editable. |
-| Rearrange | Select an object to move, rotate, or return to the building tray. Confirm changes; cancellation restores the original placement. |
+| Rearrange | Select an object to move, rotate, or return to the building tray. Choose Move from the item’s action menu, preview a destination, then tap to move immediately. Cancel or Escape preserves the original placement during the preview; Undo move restores the previous position and rotation afterward. |
 
 Plates accept extra food rather than rejecting incorrect placements. Keep inventory and plate contents visible and countable. Do not highlight the correct mathematical destination after each action. Consume requested portions only when the picnic succeeds; return extras to the basket. Food is never lost on an unsuccessful attempt.
 
@@ -65,7 +65,7 @@ Introduce one control at a time through short picture-supported instructions and
 The opening targets approximately ten minutes, without enforcing a duration:
 
 1. Choose a garden slot and meet Pip.
-2. Place Pip’s home with a preview and confirmation.
+2. Begin with an empty clearing and Pip waiting by the entrance. Tap a space to place Pip’s one available home immediately. Other building options become available.
 3. Learn to plant, water, and harvest carrots.
 4. Prepare Pip’s lunch and ring the bell; revise if needed.
 5. Build or decorate freely, then accept visiting friends’ picnic request.
@@ -109,7 +109,7 @@ Codespaces uses one fixed Vite port bound to 0.0.0.0, declared in the devcontain
 | Milestone | Deliverable | Acceptance |
 | --- | --- | --- |
 | 0 Setup | Repository, pinned dependencies, Codespaces configuration, CI, Cloudflare previews, and project documentation. | A minimal build loads from a deployed preview; dev and production routing are verified. |
-| 1 Garden building | Orthographic clearing, grid, basic home, bed, paths, decorations, placement previews, movement, rotation, cancellation. | Mouse and touch placement work; overlap rules hold; cancellation preserves objects; scenes stay readable. |
+| 1 Garden building | Orthographic clearing, grid, basic home, bed, paths, decorations, immediate new placement, Undo, immediate movement after choosing Move, Undo move, rotation, cancellation. | Mouse and touch placement work; overlap rules hold; cancellation preserves objects; scenes stay readable. |
 | 2 Growing | Plant, water, grow, harvest, and countable basket. | Each plant yields one carrot; repeated clicks cannot duplicate harvest; moving a bed preserves its crops. |
 | 3 Picnics | Three opening situations, editable plates, bell, creature feedback, and success. | Transfers conserve food; insufficient and extra servings remain editable; successful consumption happens once. |
 | 4 Guided progression | Replayable onboarding, optional hints, two quantity settings, discoveries, and repeatable requests. | Guidance explains controls; all requests are feasible; decoration remains available; difficulty changes preserve progress. |
@@ -141,4 +141,8 @@ These are expansion directions, not prototype requirements or a fixed curriculum
 
 ## Implementation handoff
 
-Begin with milestone 0, then milestone 1. The source repository is jvong11/little-landkeepers. Cloudflare Pages integration still needs to be connected and verified. The first reviewable gameplay milestone is a browser scene where a child can place, move, rotate, and remove building pieces with clear feedback.
+Begin with milestone 0, then milestone 1. The source repository is jvong11/little-landkeepers. Cloudflare Pages integration is connected and verified, with main for production and a separate dev preview. The first reviewable gameplay milestone is a browser scene where a child can place, move, rotate, and remove building pieces with clear feedback.
+
+Placed pieces first open an on-garden actions menu with a four-direction Move icon and Cancel. Clicking away dismisses the menu. Move starts a pointer-following preview (tap a destination on touch). A valid destination tap moves immediately. Cancel or Escape preserves the original during preview; Undo move restores the previous position and rotation after placement. Invalid taps keep the preview active.
+
+Milestone 2 implementation uses two soil spaces per bed plus the permanent two-space patch. One watering starts a six-second active-tab crop cycle; hidden tabs pause growth. Temporary visual stages are seed, wet soil with growing leaves, and an orange ripe carrot. The basket groups individual carrots in rows of five and groups of ten. Soil spaces supplies a keyboard-accessible view of the same crop state. Planted-bed removal is blocked, including placement undo. Moving, turning, and undoing bed movement preserves crop identity and progress.

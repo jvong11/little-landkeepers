@@ -1,20 +1,61 @@
-:root { font-family: ui-rounded, 'Trebuchet MS', system-ui, sans-serif; color: #344b32; background: #f6f4e9; font-synthesis: none; text-rendering: optimizeLegibility; }
+:root { font-family: ui-rounded, 'Trebuchet MS', system-ui, sans-serif; color: #344b32; background: #e9eed9; font-synthesis: none; text-rendering: optimizeLegibility; }
 * { box-sizing: border-box; }
 body { margin: 0; }
-.shell { max-width: 1440px; margin: auto; padding: 28px 5vw 20px; }
-.masthead { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.brand { color: inherit; text-decoration: none; font-size: clamp(18px, 2vw, 25px); font-weight: 800; letter-spacing: -.7px; }
-.brand span { color: #b76b43; font-size: 32px; vertical-align: middle; margin-right: 8px; }
-.badge { font-size: 12px; font-weight: 700; padding: 8px 13px; border: 1px solid #d8dec8; border-radius: 30px; white-space: nowrap; }
-.intro { position: relative; z-index: 1; padding-top: 48px; pointer-events: none; }
-.eyebrow { text-transform: uppercase; letter-spacing: 2px; font-size: 11px; font-weight: 800; color: #7c6847; }
-h1 { font-size: clamp(36px, 5vw, 65px); line-height: 1.05; letter-spacing: -2px; margin: 15px 0; }
-.intro > p:last-child { color: #68715b; line-height: 1.7; font-size: 16px; }
-.garden { position: relative; height: clamp(350px, 56vw, 620px); margin-top: -160px; margin-left: 24%; background: radial-gradient(ellipse at center, #e5ebd2 0%, transparent 70%); }
-.scene-note { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: #fffaf0; border: 1px solid #dedfca; border-radius: 18px; padding: 12px 20px; color: #526449; font-size: 13px; white-space: nowrap; }
-.scene-message { padding: 25px; max-width: 350px; margin: 100px auto; line-height: 1.6; }
-footer { padding-top: 15px; border-top: 1px solid #dce0ce; display: flex; align-items: baseline; justify-content: space-between; gap: 20px; }
-footer span { font-weight: 700; font-size: 14px; }
-footer p { color: #6c735f; font-size: 13px; line-height: 1.5; }
-a:focus-visible { outline: 3px solid #b76b43; outline-offset: 5px; border-radius: 4px; }
-@media (max-width: 720px) { .shell { padding: 20px; } .intro { padding-top: 30px; } .garden { margin: -10px -20px 0; height: 380px; } footer { display: block; } .scene-note { font-size: 12px; padding: 10px 14px; } }
+button { font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+button:disabled { cursor: default; opacity: .45; }
+button:focus-visible, .garden:focus-visible { outline: 3px solid #ad663d; outline-offset: 3px; }
+.game-shell { position: relative; width: 100%; height: 100dvh; min-height: 360px; overflow: hidden; background: radial-gradient(ellipse, #e4ebce 0%, #eff0df 75%); }
+.game-shell:fullscreen { height: 100dvh; }
+.garden { position: absolute; inset: 0; }
+.garden canvas { touch-action: none; }
+.game-header { position: absolute; top: max(18px, env(safe-area-inset-top)); left: 24px; right: 24px; display: flex; justify-content: space-between; gap: 12px; align-items: center; pointer-events: none; }
+.game-header h1 { font-size: clamp(18px, 2vw, 25px); letter-spacing: -.7px; margin: 0; padding: 8px 14px; border-radius: 24px; background: #fffbeeeb; }
+.game-header h1 span { color: #b47749; margin-right: 7px; }
+.game-header nav { display: flex; gap: 8px; pointer-events: auto; }
+.round-button { width: 46px; height: 46px; border: 1px solid #d8dfc6; border-radius: 50%; background: #fffbee; color: #526449; font-size: 23px; font-weight: 700; box-shadow: 0 3px 0 #ced4bd6b; }
+.pip-tip { position: absolute; top: 90px; left: 28px; display: flex; align-items: center; gap: 12px; width: min(355px, calc(100% - 56px)); padding: 13px 18px 13px 12px; border-radius: 22px; background: #fffbeeef; box-shadow: 0 5px 20px #56664c0c; pointer-events: none; }
+.pip-face { width: 45px; height: 45px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; background: #e9eed9; font-size: 30px; }
+.pip-tip strong { font-size: 12px; color: #8e714f; }
+.pip-tip p { font-size: 14px; margin: 4px 0 0; line-height: 1.45; }
+.pip-tip.warning { background: #fff0dceF; color: #854830; }
+.edit-tools { position: absolute; bottom: 178px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; background: #fffbefef; padding: 8px 12px; border-radius: 24px; max-width: calc(100% - 24px); box-shadow: 0 3px 15px #52644810; }
+.edit-tools > span { font-size: 12px; font-weight: 700; white-space: nowrap; padding: 0 8px; }
+.edit-tools button { border: 0; background: #e8edd7; border-radius: 18px; min-height: 44px; padding: 9px 15px; color: #526449; font-weight: 700; white-space: nowrap; font-size: 13px; }
+.move-popup { position: absolute; transform: translate(-50%, -100%); width: 286px; border: 2px solid #a8bc89; background: #fffbee; border-radius: 22px; padding: 17px; box-shadow: 0 8px 30px #334d3226; z-index: 5; }
+.move-popup::after { content: ''; position: absolute; left: calc(50% - 9px); bottom: -10px; width: 16px; height: 16px; background: #fffbee; border-right: 2px solid #a8bc89; border-bottom: 2px solid #a8bc89; transform: rotate(45deg); }
+.move-popup h2 { font-size: 20px; margin: 0 0 7px; }
+.move-popup p { font-size: 13px; line-height: 1.4; margin: 0 0 13px; }
+.move-popup > div { display: flex; gap: 8px; }
+.primary, .secondary { flex: 1; min-height: 48px; border-radius: 14px; font-weight: 700; border: 1px solid #d8dfc6; padding: 8px; font-size: 13px; }
+.primary { background: #55784e; border-color: #55784e; color: #fffbee; }.secondary { background: #edf0de; color: #526449; }
+.undo-button { position: absolute; bottom: 184px; left: 50%; transform: translateX(-50%); border: 1px solid #d8dfc6; border-radius: 22px; background: #fffbeeef; color: #526449; min-height: 44px; padding: 10px 20px; font-size: 13px; font-weight: 700; }
+.tray { position: absolute; bottom: max(28px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: min(710px, calc(100% - 28px)); background: #fffbedf2; border: 1px solid #d8dfc6; border-radius: 24px; padding: 13px 16px 14px; box-shadow: 0 7px 30px #52644814; }
+.tray-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.tray-heading h2 { font-size: 14px; margin: 0; }.tray-heading > span { font-size: 11px; color: #7b816c; }
+.tray-items { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.tray-piece { background: #f3f2df; border: 2px solid transparent; border-radius: 15px; color: #4a5e3e; padding: 8px 3px; display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 82px; }
+.tray-piece:hover:not(:disabled) { border-color: #b9c694; }.tray-piece.active { border-color: #6f8d58; background: #e4eccf; }
+.piece-icon { height: 28px; font-size: 27px; color: #a36c43; line-height: 1; }.piece-icon.flowers { color: #c38d3e; }.piece-icon.path { color: #a89573; }.piece-icon.lantern { color: #bfa155; }.piece-icon.bed { font-size: 23px; }
+.tray-piece strong { font-size: 11px; white-space: nowrap; }.availability { font-size: 9px; color: #7d816a; white-space: nowrap; }
+.preview-note { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #778069; white-space: nowrap; }
+.scene-message { max-width: 330px; margin: 35vh auto; padding: 25px; line-height: 1.6; background: #fffbee; border-radius: 20px; }
+.screen-note { position: absolute; top: 84px; right: 22px; background: #fffbee; border: 1px solid #d8dfc6; border-radius: 16px; padding: 15px; font-size: 13px; max-width: 300px; z-index: 8; }.screen-note button { border: 0; background: transparent; padding: 8px; }
+.game-dialog { width: min(450px, calc(100% - 32px)); max-height: calc(100dvh - 60px); border: 1px solid #d8dfc6; border-radius: 24px; background: #fffbee; padding: 24px; color: #465d3d; box-shadow: 0 20px 70px #334d3233; }
+.game-dialog::backdrop { background: #334d3266; }.dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }.dialog-heading h2 { font-size: 23px; margin: 0; }.dialog-heading button { border: 0; border-radius: 50%; width: 44px; height: 44px; background: #edf0dd; color: #526449; }.game-dialog p, .game-dialog li { font-size: 14px; line-height: 1.6; }.game-dialog ol { padding-left: 22px; }
+.object-list { list-style: none; padding: 0; }.object-list button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; text-align: left; border: 0; border-bottom: 1px solid #e2e6d3; background: transparent; color: #526449; font-size: 14px; }.object-list button span:last-child { margin-left: auto; }
+@media(max-width: 620px) { .game-header { top: 12px; left: 12px; right: 12px; gap: 4px; }.game-header h1 { font-size: 16px; padding: 9px; }.game-header h1 span { margin-right: 3px; }.game-header nav { gap: 5px; }.round-button { width: 40px; height: 40px; font-size: 20px; }.pip-tip { top: 73px; left: 12px; width: min(320px, calc(100% - 24px)); padding: 10px 13px; }.pip-tip p { font-size: 12px; }.pip-face { font-size: 26px; width: 38px; height: 38px; }.tray { padding: 10px; border-radius: 20px; }.tray-heading > span { display: none; }.tray-items { gap: 5px; overflow-x: auto; grid-template-columns: repeat(6, minmax(63px, 1fr)); }.tray-piece { min-height: 76px; }.tray-piece strong { font-size: 10px; }.availability { font-size: 8px; }.edit-tools { bottom: 165px; gap: 5px; padding: 7px; }.edit-tools > span { display: none; }.edit-tools button { padding: 9px 12px; font-size: 12px; }.undo-button { bottom: 167px; }.move-popup { width: 280px; }.preview-note { font-size: 9px; } }
+@media(max-height: 560px) and (min-width: 621px) { .pip-tip { top: 74px; padding: 9px; width: 260px; }.pip-tip p { font-size: 12px; }.tray { padding: 9px 12px; bottom: 22px; }.tray-heading { display: none; }.tray-piece { min-height: 65px; gap: 2px; }.edit-tools, .undo-button { bottom: 115px; }.preview-note { font-size: 9px; } }
+
+.move-action { display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+.garden-tools { position: absolute; right: 24px; top: 88px; display: flex; gap: 6px; padding: 8px; background: #fffbeeef; border-radius: 22px; max-width: calc(100% - 420px); }
+.garden-tools button { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 66px; min-height: 66px; border: 2px solid transparent; border-radius: 15px; padding: 8px; background: #f1f1df; color: #4a5e3e; font-size: 12px; font-weight: 700; }
+.garden-tools button > span { font-size: 24px; line-height: 1; }.garden-tools button[aria-pressed=true] { background: #e4eccf; border-color: #6f8d58; }
+.garden-tools .basket-button { flex-direction: row; flex-wrap: wrap; justify-content: center; width: 90px; }.basket-button strong { background: #e0e8ca; border-radius: 20px; padding: 2px 6px; }
+.growing-dock { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: min(600px, calc(100% - 28px)); background: #fffbeeef; padding: 18px; border-radius: 24px; display: flex; align-items: center; gap: 14px; font-size: 14px; }
+.growing-dock strong { white-space: nowrap; }.growing-dock button { margin-left: auto; min-height: 48px; border: 0; background: #e4eccf; color: #4a5e3e; border-radius: 14px; padding: 10px; font-weight: 700; white-space: nowrap; }
+.basket-groups { display: grid; gap: 12px; }.carrot-group { display: grid; grid-template-columns: repeat(5, 1fr); list-style: none; margin: 0; padding: 12px; background: #ecedd9; border-radius: 15px; gap: 10px; }.carrot-group li { text-align: center; font-size: 30px; }
+.soil-list { list-style: none; padding: 0; }.soil-list button { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; min-height: 55px; border: 0; border-bottom: 1px solid #d8dfc6; background: transparent; color: #4a5e3e; text-align: left; }.soil-list strong { white-space: nowrap; }
+@media(max-width: 900px) { .garden-tools { top: 195px; right: 14px; flex-direction: column; max-width: 100px; }.garden-tools button { min-width: 64px; min-height: 55px; flex-direction: row; font-size: 10px; }.garden-tools button > span { font-size: 21px; }.garden-tools .basket-button { width: 64px; font-size: 10px; } }
+@media(max-width: 620px) { .garden-tools { top: 163px; right: 8px; padding: 5px; gap: 4px; }.garden-tools button { min-height: 48px; padding: 5px; min-width: 52px; font-size: 9px; }.garden-tools button > span { font-size: 18px; }.garden-tools .basket-button { width: 52px; }.growing-dock { padding: 12px; gap: 9px; font-size: 12px; }.growing-dock > span { line-height: 1.4; } }
+@media(max-height: 560px) and (min-width: 621px) { .garden-tools { top: 74px; flex-direction: row; max-width: calc(100% - 320px); }.garden-tools button { min-height: 45px; min-width: 50px; font-size: 10px; padding: 5px; }.growing-dock { padding: 10px; bottom: 24px; } }
