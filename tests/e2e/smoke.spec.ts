@@ -51,7 +51,7 @@ test('turns pieces, cancels previews, rejects invalid moves, and moves immediate
   await openGarden(page);
   await chooseCell(page, 1, 1, touch);
   await page.getByRole('button', { name: 'Build Bench', exact: true }).click();
-  await page.getByRole('button', { name: 'Turn', exact: false }).click();
+  await page.getByRole('button', { name: '↻ Turn', exact: true }).click();
   await chooseCell(page, 3, 3, touch);
   await expect(page.getByRole('button', { name: 'Build Bench', exact: true })).toContainText('3 in tray');
   await selectPiece(page, /^Move Bench /);
@@ -190,7 +190,7 @@ test('crops follow a moved and turned bed; removal is protected until harvesting
   await expect(page.getByTestId('placement-feedback')).toContainText('Watered');
   await selectPiece(page, /^Move Garden bed /);
   await expect(page.getByRole('button', { name: 'Return to tray', exact: false })).toBeDisabled();
-  await page.getByRole('button', { name: 'Turn', exact: false }).click();
+  await page.getByRole('button', { name: '↻ Turn', exact: true }).click();
   await chooseCell(page, 6, 2, touch);
   await expect(page.getByRole('button', { name: 'Undo move', exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Harvest', exact: true }).click();
