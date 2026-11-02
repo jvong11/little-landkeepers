@@ -68,3 +68,5 @@ Next: planting, watering, growing, and harvesting. Add crop state before allowin
 4. Try overlaps, garden edges, shared spaces, and blocking a front door; invalid new taps must not build. Invalid moves must explain the problem and disable Move here.
 5. Try Undo placement, Help, keyboard arrows, and the optional Fullscreen control on computer and tablet. Check that the main game does not scroll and controls remain in the viewport.
 6. Reload to confirm this milestone intentionally starts fresh; browser saving is not implemented yet.
+
+Placed pieces first open an on-garden actions menu with a four-direction Move icon and Cancel. Clicking away dismisses the menu. Move starts a pointer-following preview (tap a destination on touch), then the destination uses Move here / Cancel confirmation. The original remains in place until confirmed.

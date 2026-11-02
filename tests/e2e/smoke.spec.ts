@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { OrthographicCamera, Vector3 } from 'three';
 import { CAMERA_POSITION, gardenZoom } from '../../src/world/camera';
 
-async function chooseCell(page: Page, x: number, z: number, touch: boolean) {
+async function chooseCell(page: Page, x: number, z: number, touch: boolean, hover = false) {
   const bounds = await page.locator('canvas').boundingBox();
   if (!bounds) throw new Error('Garden canvas is missing');
   const camera = new OrthographicCamera(-bounds.width / 2, bounds.width / 2, bounds.height / 2, -bounds.height / 2, .1, 100);
@@ -13,7 +13,8 @@ async function chooseCell(page: Page, x: number, z: number, touch: boolean) {
   const point = new Vector3(x + .5 - 5, .005, z + .5 - 4).project(camera);
   const screenX = bounds.x + (point.x + 1) * bounds.width / 2;
   const screenY = bounds.y + (1 - point.y) * bounds.height / 2;
-  if (touch) await page.touchscreen.tap(screenX, screenY);
+  if (hover) await page.mouse.move(screenX, screenY);
+  else if (touch) await page.touchscreen.tap(screenX, screenY);
   else await page.mouse.click(screenX, screenY);
 }
 async function openGarden(page: Page) {
@@ -97,4 +98,39 @@ test('offers replayable help and keyboard placement', async ({ page }) => {
   await garden.focus(); await garden.press('ArrowRight'); await garden.press('Enter');
   await expect(page.getByRole('button', { name: 'Build Home', exact: true })).toContainText('0 in tray');
   await expect(page.getByRole('button', { name: 'Enter fullscreen', exact: true })).toBeVisible();
+});
+
+test('placed pieces open an actions menu before moving, with dismissal and hover preview', async ({ page }, info) => {
+  const touch = info.project.name === 'tablet-chromium';
+  await openGarden(page);
+  await chooseCell(page, 1, 1, touch);
+  await chooseCell(page, 1, 1, touch);
+  const actions = page.getByRole('dialog', { name: 'Piece actions' });
+  await expect(actions).toBeVisible();
+  await expect(page.getByLabel('Placement tools')).toHaveCount(0);
+  await actions.getByRole('button', { name: 'Cancel' }).click();
+  await expect(actions).toHaveCount(0);
+  await chooseCell(page, 1, 1, touch);
+  await chooseCell(page, 6, 3, touch);
+  await expect(actions).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Confirm move' })).toHaveCount(0);
+  await chooseCell(page, 1, 1, touch);
+  await actions.getByRole('button', { name: 'Move', exact: true }).click();
+  await expect(actions).toHaveCount(0);
+  await expect(page.getByLabel('Placement tools')).toBeVisible();
+  if (!touch) {
+    await chooseCell(page, 7, 5, false, true);
+    await expect(page.getByTestId('placement-feedback')).toContainText('shared space');
+    await chooseCell(page, 4, 2, false, true);
+    await expect(page.getByTestId('placement-feedback')).toContainText('preview');
+    await expect(page.getByRole('dialog', { name: 'Confirm move' })).toHaveCount(0);
+  }
+  await chooseCell(page, 4, 2, touch);
+  const confirmation = page.getByRole('dialog', { name: 'Confirm move' });
+  await expect(confirmation).toBeVisible();
+  await confirmation.getByRole('button', { name: 'Cancel', exact: false }).click();
+  await chooseCell(page, 1, 1, touch);
+  await expect(actions).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(actions).toHaveCount(0);
 });

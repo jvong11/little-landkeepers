@@ -45,3 +45,5 @@ All rights reserved pending an explicit project license. Public source visibilit
 - Production from main: https://little-landkeepers.pages.dev/
 - Integration testing from dev: https://dev.little-landkeepers.pages.dev/
 - Feature branches receive Cloudflare previews; review these before merging.
+
+Placed pieces first open an on-garden actions menu with a four-direction Move icon and Cancel. Clicking away dismisses the menu. Move starts a pointer-following preview (tap a destination on touch), then the destination uses Move here / Cancel confirmation. The original remains in place until confirmed.

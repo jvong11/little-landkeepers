@@ -145,3 +145,26 @@ describe('Pip’s opening and immediate building', () => {
     expect(state.objects[0].id).toBe('piece-2');
   });
 });
+
+describe('piece actions and pointer previews', () => {
+  it('inspects and dismisses a placed piece without starting a move', () => {
+    const original = reduce(emptyGarden(), { type: 'tap', position: { x: 1, z: 1 } });
+    const selected = reduce(original, { type: 'inspect', id: 'piece-1' });
+    expect(selected.selectedId).toBe('piece-1');
+    expect(selected.draft).toBeNull();
+    expect(selected.objects).toBe(original.objects);
+    expect(reduce(selected, { type: 'dismiss' }).selectedId).toBeNull();
+    expect(reduce(selected, { type: 'select', id: 'piece-1' }).selectedId).toBeNull();
+  });
+  it('follows pointer previews without committing and freezes a destination pending confirmation', () => {
+    let state = reduce(emptyGarden(), { type: 'tap', position: { x: 1, z: 1 } });
+    const original = state.objects;
+    state = reduce(state, { type: 'select', id: 'piece-1' });
+    state = reduce(state, { type: 'preview', position: { x: 3, z: 2 } });
+    state = reduce(state, { type: 'preview', position: { x: 4, z: 2 } });
+    expect(state.draft).toMatchObject({ position: { x: 4, z: 2 }, pending: false });
+    expect(state.objects).toBe(original);
+    state = reduce(state, { type: 'tap', position: { x: 4, z: 2 } });
+    expect(reduce(state, { type: 'preview', position: { x: 7, z: 5 } })).toBe(state);
+  });
+});
