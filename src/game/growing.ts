@@ -34,11 +34,13 @@ export function growCrops(state: GrowingState, elapsed: number): GrowingState {
   if (!Number.isFinite(elapsed) || elapsed <= 0) return state;
   const step = Math.min(elapsed, 1000);
   let changed = false;
+  let ripened = false;
   const crops = Object.fromEntries(Object.entries(state.crops).map(([id, crop]) => {
     if (crop.stage !== 'growing') return [id, crop];
     changed = true;
     const remaining = Math.max(0, crop.remaining - step);
+    if (!remaining) ripened = true;
     return [id, remaining ? { stage: 'growing', remaining } : { stage: 'ripe' }];
   })) as Record<string, Crop>;
-  return changed ? { ...state, crops } : state;
+  return changed ? { ...state, crops, message: ripened ? 'A carrot is ready! Choose Harvest and tap the orange carrot.' : state.message } : state;
 }

@@ -74,6 +74,7 @@ export function App() {
     : tool !== 'build' ? growing.message
     : garden.message.startsWith('This bed has plants.') ? garden.message
     : draft?.movingId && hasCrops(growing, draft.movingId) ? 'Plants stay with this bed. Tap a new spot to move it. Harvest its plants before returning it to the tray.'
+    : !draft && !garden.selectedId && garden.message.startsWith('Home placed!') && growing.basket === 0 && Object.keys(growing.crops).length === 0 ? 'Pip’s home is ready! Choose Seeds, then tap a brown soil space to grow a carrot.'
     : garden.selectedId ? 'Choose Move to find a new spot, or tap away to keep exploring.' : draft ? draft.position && error ? error : draft.movingId ? 'Move your pointer to preview a spot, then tap to move it.' : `Tap a space to place your ${items[draft.kind].name.toLowerCase()}.` : garden.message;
   return <main ref={shell} className="game-shell" onKeyDown={keyboard} onPointerDownCapture={(event) => {
     if (garden.selectedId && !(event.target instanceof Element && event.target.closest('.piece-menu'))) dispatch({ type: 'dismiss' });
